@@ -25,7 +25,7 @@
         .del-btn { left: 8px; color: #d32f2f; }
         .edit-btn { left: 45px; color: #1976d2; }
 
-        /* ستايل بطاقة الناشر الجديد */
+        /* بطاقة الناشر */
         .owner-card { display: flex; align-items: center; gap: 10px; background: #fffcfd; padding: 10px; border-radius: 15px; margin-bottom: 15px; cursor: pointer; border: 1px solid #fce4ec; transition: 0.2s; }
         .owner-card:active { transform: scale(0.98); background: #fce4ec; }
         .owner-img-small { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--pink); }
@@ -88,7 +88,7 @@
     <div class="dots" id="vDots"></div>
     <div class="v-body">
         
-        <div class="owner-card" onclick="viewOwnerProfile()">
+        <div class="owner-card" id="ownerBtn">
             <img id="vOwnerImg" src="https://via.placeholder.com/45" class="owner-img-small">
             <div class="owner-info-text">
                 <span class="label">صاحب المنتج:</span>
@@ -116,9 +116,7 @@
     firebase.initializeApp(config);
     const db = firebase.database();
     let currentEditId = null;
-    let currentProductOwner = "";
 
-    // تحديث صورة البروفايل في الهيدر
     db.ref('users/' + userPhone).on('value', snap => {
         const u = snap.val();
         if(u && u.img) document.getElementById('navProfileImg').src = u.img;
@@ -213,8 +211,6 @@
     function openDetails(id) {
         db.ref('products/' + id).once('value', snap => {
             const data = snap.val();
-            currentProductOwner = data.owner;
-
             const s = document.getElementById('vSlider'); const dots = document.getElementById('vDots');
             s.innerHTML = ''; dots.innerHTML = '';
             const imgs = data.album || [data.image];
@@ -223,11 +219,16 @@
                 dots.innerHTML += `<div class="dot ${i==0?'active':''}"></div>`;
             });
 
-            // جلب بيانات الناشر للبطاقة
+            // جلب بيانات الناشر وتحديث رابط البطاقة
             db.ref('users/' + data.owner).once('value', uSnap => {
                 const uData = uSnap.val() || {};
                 document.getElementById('vOwnerName').innerText = uData.name || "مستخدم";
                 document.getElementById('vOwnerImg').src = uData.img || "https://via.placeholder.com/45";
+                
+                // حل مشكلة الانتقال: الربط المباشر بـ data.owner الخاص بهذا المنتج
+                document.getElementById('ownerBtn').onclick = function() {
+                    location.href = `profile.html?id=${data.owner}`;
+                };
             });
 
             document.getElementById('vTitle').innerText = data.title;
@@ -241,10 +242,6 @@
             document.getElementById('detailsScreen').style.display = 'block';
             window.history.pushState({p:1}, '');
         });
-    }
-
-    function viewOwnerProfile() {
-        if(currentProductOwner) location.href = `profile.html?id=${currentProductOwner}`;
     }
 
     window.onpopstate = () => document.querySelectorAll('.modal, #detailsScreen').forEach(m => m.style.display='none');
