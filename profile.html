@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Alfaham</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --pink: #880e4f; --accent: #ad1457; --gray: #f8f9fa; }
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; outline: none; }
+        body { background: #fdfdfd; margin: 0; color: #333; padding-bottom: 50px; }
+        .profile-header { height: 180px; background: linear-gradient(45deg, var(--pink), var(--accent)); border-radius: 0 0 30px 30px; position: relative; }
+        .avatar-container { position: relative; width: 130px; height: 130px; margin: -65px auto 0; }
+        #userAvatar { width: 130px; height: 130px; border-radius: 50%; border: 5px solid white; object-fit: cover; background: #eee; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .edit-avatar-btn { position: absolute; bottom: 5px; right: 5px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; border: none; font-size: 18px; }
+        .profile-details { text-align: center; padding: 15px 20px; }
+        h2 { margin: 10px 0 5px; font-weight: 800; }
+        .store-name { color: var(--pink); font-weight: 700; font-size: 15px; display: block; margin-bottom: 10px; }
+        .visitor-actions { display: none; padding: 20px; gap: 10px; }
+        .btn-message { flex: 1; background: var(--pink); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .owner-settings { display: block; padding: 20px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: #777; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; background: white; }
+        .save-btn { background: #2e7d32; color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        .mode-switcher { position: fixed; bottom: 10px; left: 10px; background: #333; color: white; padding: 5px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="profile-header"></div>
+    <div class="profile-info">
+        <div class="avatar-container">
+            <img id="userAvatar" src="https://via.placeholder.com/150">
+            <input type="file" id="avatarInput" hidden accept="image/*" onchange="updateAvatar(this)">
+            <button class="edit-avatar-btn" id="editAvatarBtn" onclick="document.getElementById('avatarInput').click()">✎</button>
+        </div>
+        <div class="profile-details">
+            <h2 id="dispName">اسم المستخدم</h2>
+            <span class="store-name" id="dispStore">اسم المتجر</span>
+        </div>
+    </div>
+
+    <div id="visitorView" class="visitor-actions">
+        <a id="msgLink" href="#" class="btn-message">✉ مراسلة الآن</a>
+    </div>
+
+    <div id="ownerView" class="owner-settings">
+        <div class="input-group"><label>اسم المستخدم</label><input type="text" id="inName"></div>
+        <div class="input-group"><label>اسم المتجر</label><input type="text" id="inStore"></div>
+        <div class="input-group"><label>رقم الواتساب</label><input type="tel" id="inWa"></div>
+        <div class="input-group"><label>رقم الموبايل</label><input type="tel" id="inPhone" readonly style="background:#f0f0f0;"></div>
+        <div class="input-group"><label>رابط تليجرام/إنستا</label><input type="url" id="inSocial"></div>
+        <button class="save-btn" id="saveBtn" onclick="saveProfile()">حفظ التعديلات</button>
+    </div>
+
+    <div class="mode-switcher" onclick="toggleViewMode()">تبديل العرض</div>
+
+    <script>
+        const config = { databaseURL: "https://cosmetic-1980-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(config);
+        const db = firebase.database();
+
+        // تحقق من تسجيل الدخول
+        const userPhone = localStorage.getItem('app_user_phone');
+        if (!userPhone) {
+            location.href = 'login.html';
+        }
+
+        window.onload = function() {
+            // جلب بيانات المستخدم المحددة عبر رقم الموبايل
+            db.ref('users/' + userPhone).once('value', snap => {
+                const saved = snap.val() || {};
+                
+                // تحديث الواجهة
+                document.getElementById('dispName').innerText = saved.name || "اسم المستخدم";
+                document.getElementById('inName').value = saved.name || "";
+                
+                // جلب اسم المتجر وبقية الإعدادات من قسم settings العام
+                db.ref('settings').once('value', sSnap => {
+                    const settings = sSnap.val() || {};
+                    document.getElementById('dispStore').innerText = settings.store || "اسم المتجر";
+                    document.getElementById('inStore').value = settings.store || "";
+                    document.getElementById('inWa').value = settings.wa || "";
+                    document.getElementById('inSocial').value = settings.social || "";
+                });
+
+                if(saved.img) document.getElementById('userAvatar').src = saved.img;
+                document.getElementById('inPhone').value = userPhone;
+            });
+        };
+
+        function updateAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => { document.getElementById('userAvatar').src = e.target.result; };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function saveProfile() {
+            const btn = document.getElementById('saveBtn');
+            btn.innerText = "جاري الحفظ...";
+            
+            const name = document.getElementById('inName').value;
+            const store = document.getElementById('inStore').value;
+            const wa = document.getElementById('inWa').value;
+            const social = document.getElementById('inSocial').value;
+            const img = document.getElementById('userAvatar').src;
+
+            const userData = { name, img, phone: userPhone };
+            const storeSettings = { store, wa, social, img };
+
+            try {
+                // حفظ بيانات المستخدم الخاصة
+                await db.ref('users/' + userPhone).update(userData);
+                // حفظ إعدادات المتجر العامة
+                await db.ref('settings').update(storeSettings);
+                
+                // تحديث التخزين المحلي
+                localStorage.setItem('alfaham_profile', JSON.stringify({...userData, ...storeSettings}));
+
+                document.getElementById('dispName').innerText = name;
+                document.getElementById('dispStore').innerText = store;
+                btn.innerText = "حفظ التعديلات";
+                alert("تم تحديث الملف الشخصي بنجاح!");
+            } catch (error) {
+                alert("حدث خطأ أثناء الحفظ");
+                btn.innerText = "حفظ التعديلات";
+            }
+        }
+
+        let isOwner = true;
+        function toggleViewMode() {
+            isOwner = !isOwner;
+            document.getElementById('ownerView').style.display = isOwner ? 'block' : 'none';
+            document.getElementById('editAvatarBtn').style.display = isOwner ? 'flex' : 'none';
+            document.getElementById('visitorView').style.display = isOwner ? 'none' : 'flex';
+            if(!isOwner) document.getElementById('msgLink').href = "https://wa.me/" + document.getElementById('inWa').value;
+        }
+    </script>
+</body>
+</html>
