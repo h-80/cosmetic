@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - كوزمتك</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --pink: #880e4f; }
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+        body { background: #fdfdfd; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-box { width: 90%; max-width: 400px; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .avatar-upload { width: 100px; height: 100px; border-radius: 50%; background: #eee; margin: 0 auto 20px; position: relative; cursor: pointer; border: 3px solid var(--pink); overflow: hidden; }
+        .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; text-align: center; }
+        .btn-start { width: 100%; padding: 15px; background: var(--pink); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h2 style="color:var(--pink);">مرحباً بك</h2>
+    <p style="font-size: 14px; color: #666;">يرجى إكمال بياناتك للبدء</p>
+    
+    <div class="avatar-upload" onclick="document.getElementById('fileInput').click()">
+        <img id="preview" src="https://via.placeholder.com/100">
+        <input type="file" id="fileInput" hidden accept="image/*" onchange="previewImg(this)">
+    </div>
+    
+    <input type="text" id="userName" placeholder="اسم المستخدم">
+    <input type="tel" id="userPhone" placeholder="رقم الموبايل (مثلاً 078...)">
+    
+    <button class="btn-start" id="btnGo" onclick="startApp()">ابدأ الآن</button>
+</div>
+
+<script>
+    const config = { databaseURL: "https://cosmetic-1980-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+
+    function previewImg(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById('preview').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function startApp() {
+        const name = document.getElementById('userName').value;
+        const phone = document.getElementById('userPhone').value;
+        const img = document.getElementById('preview').src;
+
+        if(!name || !phone) return alert("يرجى ملء جميع الحقول");
+
+        const btn = document.getElementById('btnGo');
+        btn.innerText = "جاري التحميل...";
+        btn.disabled = true;
+
+        const userData = { name, phone, img, joinedAt: Date.now() };
+
+        // الحفظ في فيربيس باستخدام الرقم كمعرف
+        await db.ref('users/' + phone).set(userData);
+        
+        // الحفظ محلياً لعدم طلب الدخول مرة أخرى
+        localStorage.setItem('app_user_phone', phone);
+        localStorage.setItem('alfaham_profile', JSON.stringify(userData));
+
+        location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
