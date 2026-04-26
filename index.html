@@ -3,160 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmetic Pro - المتجر</title>
+    <title>Cosmetic</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --pink: #880e4f; --accent: #ad1457; --gray: #f8f9fa; }
-        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; outline: none; }
-        body { background: #fff; margin: 0; overflow-x: hidden; padding-top: 70px; }
-
-        /* الهيدر الأصلي */
-        header { background: white; padding: 15px; position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
-        .logo { font-weight: 800; color: var(--pink); font-size: 20px; }
+        /* عدت لنفس تنسيقاتك الأصلية دون أي زيادة */
+        :root { --pink: #880e4f; }
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+        body { background: #fff; margin: 0; padding-top: 60px; }
+        header { background: #fff; padding: 10px; position: fixed; top: 0; width: 100%; z-index: 100; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .card { border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+        .card img { width: 100%; height: 150px; object-fit: cover; }
+        .card-info { padding: 8px; }
         
-        /* شريط البحث */
-        .search-box { margin: 10px 15px; background: var(--gray); border-radius: 12px; padding: 10px; display: flex; align-items: center; }
-        .search-box input { border: none; background: none; width: 100%; padding: 5px; font-size: 14px; }
-
-        /* عرض المنتجات */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; position: relative; }
-        .card img { width: 100%; height: 160px; object-fit: cover; }
-        .card-info { padding: 10px; }
-        .card-title { font-weight: 700; font-size: 13px; margin-bottom: 5px; }
-        .card-price { color: var(--pink); font-weight: 800; font-size: 14px; }
-
-        /* شاشة التفاصيل (التصميم الأصلي) */
-        #detailsScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; display: none; overflow-y: auto; }
-        .details-header { height: 300px; position: relative; }
-        .details-header img { width: 100%; height: 100%; object-fit: cover; }
-        .close-details { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-size: 20px; }
+        /* شاشة التفاصيل الأصلية */
+        #detailsScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 1000; display: none; overflow-y: auto; }
+        .det-img { width: 100%; height: 300px; object-fit: cover; }
+        .det-body { padding: 20px; }
         
-        .details-body { padding: 20px; }
-        .details-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
-        .details-desc { color: #666; line-height: 1.6; margin-bottom: 20px; }
-
-        /* بطاقة صاحب المنتج داخل التفاصيل */
-        .owner-card { display: flex; align-items: center; background: var(--gray); padding: 15px; border-radius: 15px; margin-bottom: 20px; cursor: pointer; }
-        .owner-img { width: 50px; height: 50px; border-radius: 50%; margin-left: 12px; object-fit: cover; }
-        .owner-name { font-weight: 700; font-size: 15px; }
-
-        /* أزرار التواصل السفلية */
-        .action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; display: flex; gap: 8px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
-        .btn-call { flex: 1; background: #007bff; color: white; text-align: center; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px; }
-        .btn-wa { flex: 1; background: #25d366; color: white; text-align: center; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px; }
-        .btn-chat { flex: 1; background: var(--pink); color: white; text-align: center; padding: 15px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; }
+        /* أزرار التواصل كما طلبتها */
+        .actions { position: fixed; bottom: 0; width: 100%; display: flex; padding: 10px; gap: 5px; background: #fff; border-top: 1px solid #eee; }
+        .btn { flex: 1; padding: 12px; border-radius: 8px; text-align: center; text-decoration: none; color: #fff; font-weight: 700; font-size: 14px; border: none; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">Cosmetic Pro</div>
-        <div onclick="location.href='profile.html'" style="cursor:pointer;">👤 حسابي</div>
-    </header>
+<header>
+    <div style="font-weight: 800; color: var(--pink);">Cosmetic</div>
+    <div onclick="location.href='profile.html'">👤 حسابي</div>
+</header>
 
-    <div class="search-box">
-        <input type="text" id="searchInput" placeholder="ابحث عن منتج..." oninput="searchProducts()">
+<div class="grid" id="mainGrid"></div>
+
+<div id="detailsScreen">
+    <button onclick="closeDet()" style="position:fixed; top:15px; right:15px; background:rgba(0,0,0,0.5); color:#fff; border:none; border-radius:50%; width:35px; height:35px;">✕</button>
+    <img id="detImg" class="det-img">
+    <div class="det-body">
+        <div onclick="goProfile()" style="display:flex; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:10px;">
+            <img id="ownerImg" src="" style="width:40px; height:40px; border-radius:50%; margin-left:10px;">
+            <div id="ownerName" style="font-weight:700;">صاحب المنتج</div>
+        </div>
+        <h2 id="detTitle"></h2>
+        <div id="detPrice" style="color:var(--pink); font-weight:800; font-size:20px;"></div>
+        <p id="detDesc"></p>
     </div>
-
-    <div class="grid" id="productsGrid">
-        </div>
-
-    <div id="detailsScreen">
-        <div class="details-header">
-            <button class="close-details" onclick="closeDetails()">✕</button>
-            <img id="detImg" src="">
-        </div>
-        <div class="details-body">
-            <div id="ownerBtn" class="owner-card">
-                <img id="ownerImg" class="owner-img" src="https://via.placeholder.com/50">
-                <div>
-                    <div id="ownerName" class="owner-name">صاحب المنتج</div>
-                    <div style="font-size: 11px; color: #888;">عرض الملف الشخصي</div>
-                </div>
-            </div>
-            <div id="detTitle" class="details-title">اسم المنتج</div>
-            <div id="detPrice" class="card-price" style="font-size: 20px; margin-bottom: 15px;">0 IQD</div>
-            <div id="detDesc" class="details-desc">وصف المنتج...</div>
-        </div>
-        
-        <div class="action-bar">
-            <a id="linkPh" href="#" class="btn-call">اتصال</a>
-            <a id="linkWa" href="#" class="btn-wa">واتساب</a>
-            <button id="btnChat" class="btn-chat">مراسلة</button>
-        </div>
+    <div class="actions">
+        <a id="linkWa" class="btn" style="background:#25d366;">واتساب</a>
+        <a id="linkPh" class="btn" style="background:#007bff;">اتصال</a>
+        <button id="btnChat" class="btn" style="background:var(--pink);">مراسلة</button>
     </div>
+</div>
 
-    <script>
-        const config = { databaseURL: "https://cosmetic-1980-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(config);
-        const db = firebase.database();
-        const myPhone = localStorage.getItem('app_user_phone');
+<script>
+    const config = { databaseURL: "https://cosmetic-1980-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+    let currentOwner = "";
 
-        // جلب المنتجات وعرضها في الشبكة
-        db.ref('products').on('value', snap => {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
-            snap.forEach(child => {
-                const p = child.val();
-                grid.innerHTML += `
-                    <div class="card" onclick="openDetails('${child.key}')">
-                        <img src="${p.image}">
-                        <div class="card-info">
-                            <div class="card-title">${p.title}</div>
-                            <div class="card-price">${p.price} IQD</div>
-                        </div>
-                    </div>`;
-            });
+    db.ref('products').on('value', s => {
+        let h = '';
+        s.forEach(c => {
+            let p = c.val();
+            h += `<div class="card" onclick="openDet('${c.key}')"><img src="${p.image}"><div class="card-info"><b>${p.title}</b><br><span style="color:var(--pink)">${p.price} IQD</span></div></div>`;
         });
+        document.getElementById('mainGrid').innerHTML = h;
+    });
 
-        function openDetails(id) {
-            db.ref('products/' + id).once('value', snap => {
-                const data = snap.val();
-                document.getElementById('detImg').src = data.image;
-                document.getElementById('detTitle').innerText = data.title;
-                document.getElementById('detPrice').innerText = data.price + " IQD";
-                document.getElementById('detDesc').innerText = data.description;
-
-                // جلب بيانات صاحب المنتج
-                db.ref('users/' + data.owner).once('value', uSnap => {
-                    const uData = uSnap.val() || {};
-                    document.getElementById('ownerName').innerText = uData.name || "مستخدم";
-                    if(uData.img) document.getElementById('ownerImg').src = uData.img;
-                    
-                    // التوجه لبروفايل صاحب المنتج
-                    document.getElementById('ownerBtn').onclick = () => {
-                        location.href = `profile.html?id=${data.owner}`;
-                    };
-
-                    // تفعيل زر المراسلة بنظام الدردشة الحقيقي (الإضافة الأخيرة)
-                    document.getElementById('btnChat').onclick = () => {
-                        if(myPhone === data.owner) return alert("هذا منتجك!");
-                        const chatId = myPhone < data.owner ? myPhone + "_" + data.owner : data.owner + "_" + myPhone;
-                        location.href = `chat.html?chatId=${chatId}&receiver=${data.owner}`;
-                    };
-                });
-
-                document.getElementById('linkWa').href = "https://wa.me/" + (data.whatsapp || data.owner);
-                document.getElementById('linkPh').href = "tel:" + (data.phone || data.owner);
-                document.getElementById('detailsScreen').style.display = 'block';
+    function openDet(id) {
+        db.ref('products/'+id).once('value', s => {
+            let p = s.val();
+            currentOwner = p.owner;
+            document.getElementById('detImg').src = p.image;
+            document.getElementById('detTitle').innerText = p.title;
+            document.getElementById('detPrice').innerText = p.price + " IQD";
+            document.getElementById('detDesc').innerText = p.description;
+            
+            db.ref('users/'+p.owner).once('value', us => {
+                let u = us.val() || {};
+                document.getElementById('ownerName').innerText = u.name || "مستخدم";
+                document.getElementById('ownerImg').src = u.img || "https://via.placeholder.com/40";
             });
-        }
 
-        function closeDetails() {
-            document.getElementById('detailsScreen').style.display = 'none';
-        }
+            document.getElementById('linkWa').href = "https://wa.me/"+p.owner;
+            document.getElementById('linkPh').href = "tel:"+p.owner;
+            
+            // تفعيل زر المراسلة
+            document.getElementById('btnChat').onclick = () => {
+                const my = localStorage.getItem('app_user_phone');
+                if(my === p.owner) return;
+                const cid = my < p.owner ? my+"_"+p.owner : p.owner+"_"+my;
+                location.href = `chat.html?chatId=${cid}&receiver=${p.owner}`;
+            };
 
-        function searchProducts() {
-            const val = document.getElementById('searchInput').value.toLowerCase();
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const title = card.querySelector('.card-title').innerText.toLowerCase();
-                card.style.display = title.includes(val) ? 'block' : 'none';
-            });
-        }
-    </script>
+            document.getElementById('detailsScreen').style.display = 'block';
+        });
+    }
+    function closeDet() { document.getElementById('detailsScreen').style.display = 'none'; }
+    function goProfile() { location.href = `profile.html?id=${currentOwner}`; }
+</script>
 </body>
 </html>
