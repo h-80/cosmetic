@@ -3,189 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رسائل كوزمتك</title>
+    <title>المحادثة - متجر الفحام</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --pink: #880e4f; }
+        :root { --pink: #880e4f; --user-bg: #fff; --admin-bg: #f8bbd0; }
         * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
-        body { background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        header { 
-            background: var(--pink); color: white; padding: 10px 15px; 
-            display: flex; align-items: center; gap: 10px;
-            font-weight: bold; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            min-height: 60px; flex-shrink: 0; z-index: 10;
-        }
-        .back-btn { cursor: pointer; font-size: 20px; padding-left: 10px; }
-        #headerImg { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; display: none; }
+        body { background: #f0f0f0; margin: 0; display: flex; flex-direction: column; height: 100vh; }
 
-        #inboxView { flex: 1; overflow-y: auto; padding-bottom: 20px; }
-        .chat-item { 
-            background: white; margin: 8px 12px; padding: 12px; border-radius: 15px;
-            display: flex; align-items: center; gap: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer;
-        }
-        .user-img-list { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #eee; }
-        .chat-info { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .user-name { font-weight: 700; color: #333; font-size: 14px; }
-        .last-msg { font-size: 12px; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .unread-dot { width: 10px; height: 10px; background: #ff1744; border-radius: 50%; margin-right: 10px; }
+        header { background: var(--pink); color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; position: sticky; top: 0; z-index: 100; }
 
-        /* تعديلات نافذة الدردشة */
-        #chatView { flex: 1; display: none; flex-direction: column; background: #e5ddd5; position: relative; overflow: hidden; }
-        #msgBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+        /* منطقة الرسائل - الفقاعات */
+        #chatBox { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #e5ddd5; }
         
-        .msg { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .msg { padding: 10px 15px; border-radius: 18px; max-width: 80%; font-size: 15px; line-height: 1.4; position: relative; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         
-        /* الرسالة المرسلة (أنا) - جهة اليمين */
-        .sent { align-self: flex-start; background: var(--pink); color: white; border-bottom-right-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        /* رسالة المستخدم (أنت) */
+        .msg.user { background: white; align-self: flex-start; border-bottom-left-radius: 2px; color: #333; }
         
-        /* الرسالة المستقبلة (الطرف الآخر) - جهة اليسار */
-        .received { align-self: flex-end; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        
-        .input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 8px; align-items: center; flex-shrink: 0; border-top: 1px solid #ddd; }
-        #mInput { flex: 1; border: 1px solid #ddd; padding: 12px 15px; border-radius: 25px; outline: none; font-size: 14px; }
-        #sendBtn { background: var(--pink); color: white; border: none; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        /* رسالة الإدارة */
+        .msg.admin { background: #fce4ec; align-self: flex-end; border-bottom-right-radius: 2px; color: #333; border: 1px solid #f8bbd0; }
+
+        /* منطقة الإدخال */
+        .input-area { background: white; padding: 12px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #ddd; }
+        .input-area input { flex: 1; padding: 12px 18px; border-radius: 25px; border: 1px solid #ddd; outline: none; font-size: 15px; }
+        .input-area button { background: var(--pink); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.2s; }
+        .input-area button:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="back-btn" id="btnBack" onclick="goBack()">❮</div>
-    <img id="headerImg" src="">
-    <span id="headerTitle">رسائلي</span>
-</header>
+<header>محادثة الدعم الفني</header>
 
-<div id="inboxView">
-    <div id="listContent"></div>
-</div>
-
-<div id="chatView">
-    <div id="msgBox"></div>
-    <div class="input-area">
-        <input type="text" id="mInput" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter') sendMsg()">
-        <button id="sendBtn" onclick="sendMsg()">إرسال</button>
+<div id="chatBox">
     </div>
+
+<div class="input-area">
+    <input type="text" id="userMsg" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()">✈</button>
 </div>
 
 <script>
-    const userPhone = localStorage.getItem('app_user_phone');
-    const config = { databaseURL: "https://cosmetic-1980-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(config);
+    // تهيئة Firebase (تأكد من مطابقة نفس الرابط في لوحة التحكم)
+    const firebaseConfig = { databaseURL: "https://cosmetic-1980-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let activeChatId = null;
-    let activeReceiver = null;
+    // جلب رقم هاتف المستخدم من AppCreator24 أو الذاكرة
+    // ملاحظة: استبدل '077XXXXXXXX' بالطريقة التي تجلب بها رقم المستخدم في تطبيقك
+    const userPhone = localStorage.getItem('userPhone') || "07700000000"; 
 
-    if (!userPhone) location.href = 'login.html';
-
-    async function getUserData(phone) {
-        const snap = await db.ref('users/' + phone).once('value');
-        const data = snap.val() || {};
-        return {
-            name: data.name || "مستخدم " + phone,
-            img: data.img || "https://via.placeholder.com/50"
-        };
-    }
-
-    db.ref('chats').on('value', async snap => {
-        const list = document.getElementById('listContent');
-        list.innerHTML = '';
-        const promises = [];
-
-        snap.forEach(child => {
-            const chat = child.val();
-            const cid = child.key;
-            if (cid.includes(userPhone)) {
-                const otherPhone = cid.split('_').find(p => p !== userPhone);
-                promises.push(getUserData(otherPhone).then(user => ({ ...user, chat, cid, otherPhone })));
-            }
-        });
-
-        const results = await Promise.all(promises);
-        results.forEach(res => {
-            const isUnread = (res.chat.receiver === userPhone && res.chat.unread === true);
-            const item = document.createElement('div');
-            item.className = 'chat-item';
-            item.onclick = () => openChat(res.cid, res.otherPhone, res.name, res.img);
-            item.innerHTML = `
-                <img src="${res.img}" class="user-img-list">
-                <div class="chat-info">
-                    <span class="user-name">${res.name}</span>
-                    <span class="last-msg">${res.chat.lastMsg || 'اضغط لبدء الدردشة'}</span>
-                </div>
-                ${isUnread ? '<div class="unread-dot"></div>' : ''}
-            `;
-            list.appendChild(item);
-        });
-    });
-
-    function openChat(cid, otherPhone, name, img) {
-        activeChatId = cid;
-        activeReceiver = otherPhone;
-        document.getElementById('inboxView').style.display = 'none';
-        document.getElementById('chatView').style.display = 'flex';
+    // وظيفة تحميل المحادثة بالكامل
+    function loadMessages() {
+        const chatBox = document.getElementById('chatBox');
         
-        document.getElementById('headerTitle').innerText = name;
-        const hImg = document.getElementById('headerImg');
-        hImg.src = img;
-        hImg.style.display = 'block';
+        // الاستماع لكل الرسائل في عقدة المستخدم
+        db.ref('chats/' + userPhone).on('value', (snapshot) => {
+            chatBox.innerHTML = ''; // تنظيف الصندوق قبل العرض
+            
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                
+                // التأكد من جلب النص الصحيح وتجاهل البيانات غير النصية
+                let messageText = "";
+                if (typeof data === 'object') {
+                    messageText = data.text || data.msg || "";
+                } else if (typeof data === 'string' && data !== userPhone) {
+                    messageText = data;
+                }
 
-        // تصفير الإشعارات عند الفتح
-        db.ref('chats/' + cid).once('value', s => {
-            if(s.val() && s.val().receiver === userPhone) db.ref('chats/' + cid).update({ unread: false });
-        });
-
-        db.ref('messages/' + cid).off();
-        db.ref('messages/' + cid).on('value', snap => {
-            const box = document.getElementById('msgBox');
-            box.innerHTML = '';
-            snap.forEach(m => {
-                const data = m.val();
-                const div = document.createElement('div');
-                // sent: للمرسل الحالي | received: للطرف الآخر
-                div.className = `msg ${data.sender === userPhone ? 'sent' : 'received'}`;
-                div.innerText = data.text;
-                box.appendChild(div);
+                if (messageText && messageText !== "[object Object]") {
+                    const div = document.createElement('div');
+                    // إذا كان الـ role هو admin تظهر كرسالة إدارة، غير ذلك تظهر كرسالة مستخدم
+                    const isFromAdmin = (data.role === 'admin');
+                    div.className = `msg ${isFromAdmin ? 'admin' : 'user'}`;
+                    div.innerText = messageText;
+                    chatBox.appendChild(div);
+                }
             });
-            box.scrollTop = box.scrollHeight;
+            
+            // التمرير لأسفل تلقائياً عند وصول رسالة جديدة
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
     }
 
-    function sendMsg() {
-        const input = document.getElementById('mInput');
+    // وظيفة إرسال الرسالة
+    function sendMessage() {
+        const input = document.getElementById('userMsg');
         const text = input.value.trim();
-        if (!text || !activeChatId) return;
         
-        db.ref('messages/' + activeChatId).push({ 
-            sender: userPhone, 
-            text: text, 
-            time: Date.now() 
+        if (text === "") return;
+
+        // إرسال الرسالة كـ Push لضمان عدم ضياع السجل القديم
+        db.ref('chats/' + userPhone).push({
+            role: 'user',   // نحدد أن المرسل هو المستخدم
+            text: text,     // نص الرسالة
+            time: Date.now()
+        }).then(() => {
+            input.value = ''; // مسح الحقل بعد الإرسال
         });
-        
-        db.ref('chats/' + activeChatId).update({ 
-            lastMsg: text, 
-            receiver: activeReceiver, 
-            unread: true, 
-            lastTime: Date.now() 
-        });
-        
-        input.value = '';
     }
 
-    function goBack() {
-        if (document.getElementById('chatView').style.display === 'flex') {
-            document.getElementById('chatView').style.display = 'none';
-            document.getElementById('inboxView').style.display = 'block';
-            document.getElementById('headerImg').style.display = 'none';
-            document.getElementById('headerTitle').innerText = 'رسائلي';
-            db.ref('messages/' + activeChatId).off();
-        } else {
-            location.href = 'index.html';
-        }
-    }
+    // بدء تشغيل جلب الرسائل عند فتح الصفحة
+    loadMessages();
 </script>
+
 </body>
 </html>
